@@ -422,38 +422,43 @@ glimpse(titanic)</code></pre>
 <pre class="r"><code>new_titanic&lt;-mutate(titanic,Sex = ifelse(Sex==&quot;male&quot;,1,0),Sex =as.integer(Sex),Age=as.integer(Age),Fare=as.integer(Fare))</code></pre>
 <p>Commentez les tableaux suivants de survie en fonction du sexe et de la classe et en déduire les probabilités conditionnelles <span class="math inline">\(\mathbb{Pr}(Surived_{|Sex\cap Classe})\)</span> :</p>
 <pre class="r"><code>tableau&lt;-table(titanic$Sex,titanic$Survived,titanic$Pclass)
-(marg_tab&lt;-addmargins(tableau))</code></pre>
+(marg_tab&lt;-addmargins(tableau,FUN = sum))</code></pre>
+<pre><code>## Margins computed over dimensions
+## in the following order:
+## 1: 
+## 2: 
+## 3:</code></pre>
 <pre><code>## , ,  = 1
 ## 
 ##         
-##            0   1 Sum
+##            0   1 sum
 ##   female   3  91  94
 ##   male    77  45 122
-##   Sum     80 136 216
+##   sum     80 136 216
 ## 
 ## , ,  = 2
 ## 
 ##         
-##            0   1 Sum
+##            0   1 sum
 ##   female   6  70  76
 ##   male    91  17 108
-##   Sum     97  87 184
+##   sum     97  87 184
 ## 
 ## , ,  = 3
 ## 
 ##         
-##            0   1 Sum
+##            0   1 sum
 ##   female  72  72 144
 ##   male   296  47 343
-##   Sum    368 119 487
+##   sum    368 119 487
 ## 
-## , ,  = Sum
+## , ,  = sum
 ## 
 ##         
-##            0   1 Sum
+##            0   1 sum
 ##   female  81 233 314
 ##   male   464 109 573
-##   Sum    545 342 887</code></pre>
+##   sum    545 342 887</code></pre>
 </div>
 
 
