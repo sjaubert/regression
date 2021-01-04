@@ -1,0 +1,238 @@
+---
+title: 'TP Regression : temperature sensor'
+author: "S. Jaubert"
+date: "`r format(Sys.time(), ' %d %B %Y')`"
+output:
+  pdf_document: default
+  html_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Un capteur de température est utilisé pour mesurer la température entre 20°C et 150°C. La sortie du capteur est conditionnée par un circuit électronique approprié pour obtenir la production E en Volt. 
+
+Les données ci-dessous ont été recueillies en laboratoire en exposant le capteur à un environnement thermique approprié dont la température a été systématiquement variée et contrôlée par un capteur standard. 
+
+
+```{r}
+temp<-seq(from=20,to=90,by=5)
+E<-c(1.73,2.10,2.24,2.46,2.72,3.05,3.25,3.56,3.81,3.98,4.23,4.58,4.85,5.12,5.41)
+temp_sensor<-data.frame(temp=temp,E=E)
+
+plot(x=temp,y=E)
+```
+
+Rechercher un modèle linéaire semble bien justifié !
+
+### 1. Calculer les paramètres suivants :
+
+$\sigma_{t}^{2}=\mathbb{E}(t^{2})-\mathbb{E}(t)^{2}$
+
+$\sigma_{E}^{2}=\mathbb{E}(E^{2})-\mathbb{E}(E)^{2}$
+
+$\sigma_{tE}=\mathbb{E}(tE)-\mathbb{E}(E)\mathbb{E}(t)$
+
+
+### 2. Déterminer la pente du modèle linéaire $E=\alpha.temp+b$ ainsi que son "intercept" puis faire sa représentation graphique
+
+$\alpha = \frac{\sigma_{tE}}{\sigma_{t}^{2}}$
+
+$b=\mathbb{E}(E)-\alpha.\mathbb{E}(temp)$
+
+### 3. Retrouver le coefficient de détermination $R^{2}$ directement et en détaillant les calculs
+
+Pour rappel :
+
+$\begin{matrix}\sum_{i}(Y_{i}-\bar{Y})^{2} &=&\sum_{i}(Y_{i}-\hat{Y_{i}})^{2} &+& \sum_{i}  (\hat{Y_{i}}-\bar{Y})^{2} \\ SCT &=& SCres &+& SCreg \\ \end{matrix}$ 
+
+et $R^{2}=\frac{SCreg}{SCT}$
+
+### 4. Déterminer la moyenne et la variance des erreurs $\epsilon_{i}=y_{i}-\hat{y_{i}}$
+
+### 5. Illustrer graphiquement la distribution des $\epsilon_{i}$ pouvons nous considérer qu'ils suivent une loi normale ? 
+
+### 6. Représenter les valeurs ajustées en fonction des valeurs observées
+
+### 7. Prévoyez le voltage en sortie pour pour des températures de 100°C, 110°C et 120°C
+
+
+
+
+
+## Correction
+
+### 1.
+
+$\sigma_{t}^{2}=\mathbb{E}(t^{2})-\mathbb{E}(t)^{2}$
+
+obtenu directement par :
+```{r}
+var(temp)*14/15
+```
+ou par :
+```{r}
+mean(temp^2)-mean(temp)^2
+```
+idem pour $\sigma_{E}^{2}$ :
+
+```{r}
+var(E)*14/15
+```
+
+Pour $\sigma_{tE}=\mathbb{E}(tE)-\mathbb{E}(E)\mathbb{E}(t)$ :
+```{r}
+cov(temp,E)*14/15
+```
+ou :
+```{r}
+mean(temp*E)-mean(temp)*mean(E)
+```
+### 2. Déterminer la pente du modèle linéaire $E=\alpha.temp+b$ ainsi que son "intercept"
+
+Pour cette question nous pouvons directement l'obtenir avec R
+
+```{r}
+reg<-lm(E~temp,data = temp_sensor)
+summary(reg)
+
+```
+
+Nous obtenons des statistiques sur les résidus, avec le minimum, le maximum et les 3 quartiles, ainsi que des statistiques sur les coefficients obtenus : leur valeur, leur écart-type, la statistique de test de Student, et la p-valeur (le test effectué sur le paramètre est ici le test de significativité : le paramètre vaut 0 versus le paramètre est différent de 0).
+Les p-valeurs sont très faibles. À un niveau de test de 5 %, on rejette donc l'hypothèse selon laquelle le paramètre est égal à 0 : les paramètres sont donc significativement différents de 0.
+Ici, on voit que les variables temp et intercept sont significatives.
+Quant au R² , il est de l'ordre de 0.998 ceci est logique au vu de la dispersion du nuage de points originel.
+
+Nous pouvons avoir facilement l'intervalle de confiance des paramètres ;
+```{r}
+confint(reg,level = 0.95)
+```
+
+
+Bien sûr nous pouvons obtenir ces résultats par les calculs :
+
+```{r}
+(alpha<-cov(temp,E)/var(temp))
+```
+
+```{r}
+(b<-mean(E)-alpha*mean(temp))
+```
+Représentons à présent cette droite :
+
+```{r}
+library(ggplot2) #il est plus esthétique d'utiliser la librairie ggplot2
+ggplot(temp_sensor,aes(x=temp,y=E))+
+  geom_point()+
+  stat_smooth(method="lm")+
+  xlab("temp")+
+  ylab("E")
+
+```
+
+
+(nous pourrions faire plus simplement avec le code :
+
+__plot(x = temp,y = E,type="p")__
+__abline(reg,col="red")__
+)
+
+### 3. Retrouver le coefficient de détermination $R^{2}$ directement et en détaillant les calculs
+
+Nous allons retrouver le R-squared: 0.998
+
+Pour rappel :
+
+$\begin{matrix}\sum_{i}(Y_{i}-\bar{Y})^{2} &=&\sum_{i}(Y_{i}-\hat{Y_{i}})^{2} &+& \sum_{i}  (\hat{Y_{i}}-\bar{Y})^{2} \\ SCT &=& SCres &+& SCreg \\ \end{matrix}$
+
+__La somme des carrés des résidus :__
+```{r}
+E_hat<-reg$fitted.values
+(SCres<-sum((E-E_hat)^2))
+```
+__La somme des carrés expliqués par la régression :__
+
+```{r}
+ (Screg<-sum((E_hat-mean(E))^2))
+```
+__La somme des carrés totaux:__
+
+
+```{r}
+ (ScT<-sum((E-mean(E))^2))
+```
+qui est bien égal à 
+```{r}
+0.0368019 + 18.69989
+```
+On a alors :
+
+```{r}
+(R2<-Screg/ScT)
+```
+
+### 4. Déterminer la moyenne et la variance des erreurs $\epsilon_{i}$
+
+Les résidus sont obtenus par :
+
+```{r}
+reg$residuals
+
+```
+ou par la différence entre les valeurs observées et celles prédites :
+
+```{r}
+(epsilon<-E-E_hat)
+```
+
+
+Moyenne et variance des $\epsilon$ :
+
+```{r}
+mean(epsilon)
+var(epsilon)
+```
+
+### 5. Illustrer graphiquement la distribution des $\epsilon_{i}$ pouvons nous considérer qu'ils suivent une loi normale ?
+
+```{r}
+hist(epsilon)
+```
+```{r}
+qqnorm(epsilon);qqline(epsilon,col="red")
+
+```
+
+Graphiquement la représentation ne nous permet pas de rejeter l'hypothèse de normalité, un test est cependant préférable :
+
+```{r}
+shapiro.test(epsilon)
+```
+la p-value est trop importante pour rejeter l'hypothèse de normalité.
+
+
+### 6. Représenter les valeurs ajustées en fonction des valeurs observées
+
+```{r}
+temp_sensor$E_hat<-E_hat
+ggplot(temp_sensor, aes(x=E,y=E_hat))+
+  geom_point()+
+  geom_abline(intercept=0,slope=1,color="red")+
+  xlab("E")+
+  ylab("E_hat")
+
+```
+
+La droite qui s'affiche est la première bissectrice. Comme on peut le voir le modèle est très bon, les valeurs réelles et les valeurs ajustées sont quasi égales et alignées sur la droite d'équation y=x.
+
+
+### 7. Prévoyez le voltage en sortie pour des températures de 100°C, 110°C et 120°C
+
+```{r}
+reg<-lm(E~temp,data = temp_sensor)
+new_temp<-data.frame(temp=c(100,110,120))
+predict(reg,newdata = new_temp,interval = "prediction")
+```
+
